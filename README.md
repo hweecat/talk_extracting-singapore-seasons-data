@@ -1,4 +1,4 @@
-# talk_extracting-seasonal-insights-from-singapore-weather-station-data
+# Talk + Demo: Extracting Seasonal Insights from Singapore Weather Station Data
 Making Open Weather Data More Accessible: Extracting Seasonal Insights from Singapore Weather Station Data
 
 Talk + demo first given at Open UP Global Summit 2019 on 1 December 2019.
