@@ -33,6 +33,9 @@ import pickle
 
 import sys
 
+from retrying import retry
+
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
 def get_airtemp_data_from_date(date):
     url = "https://api.data.gov.sg/v1/environment/air-temperature?date=" + str(date) # for daily API request
     JSONContent = requests.get(url).json()
@@ -42,12 +45,23 @@ def get_airtemp_data_from_date(date):
     print("Data for " + str(date) + " scraped!")
     return df_retrieved
 
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
 def get_rainfall_data_from_date(date):
     url = "https://api.data.gov.sg/v1/environment/rainfall?date=" + str(date) # for daily API request
     JSONContent = requests.get(url).json()
     content = json.dumps(JSONContent, indent = 4, sort_keys=True)
     json_retrieved = (content[content.find("items")+7:content.find("metadata")-13] + ']').replace(" ", "").replace("\n", "")
     df_retrieved = pd.read_json(json_retrieved, orient="columns")    
+    print("Data for " + str(date) + " scraped!")
+    return df_retrieved
+
+@retry(wait_exponential_multiplier=1000, wait_exponential_max=10000)
+def get_relative_humidity_data_from_date(date):
+    url = "https://api.data.gov.sg/v1/environment/relative-humidity?date=" + str(date) # for daily API request
+    JSONContent = requests.get(url).json()
+    content = json.dumps(JSONContent, indent = 4, sort_keys=True)
+    json_retrieved = (content[content.find("items")+7:content.find("metadata")-13] + ']').replace(" ", "").replace("\n", "")
+    df_retrieved = pd.read_json(json_retrieved, orient="columns")
     print("Data for " + str(date) + " scraped!")
     return df_retrieved
 
@@ -59,6 +73,8 @@ def get_data_from_date_range(date_range, data_type):
                 df_date = get_airtemp_data_from_date(str(date))
             elif data_type == 'rainfall':
                 df_date = get_rainfall_data_from_date(str(date))
+            elif data_type == 'relative-humidity':
+                df_date = get_relative_humidity_data_from_date(str(date))
         except ValueError:
             continue
         df_date_list.append(df_date)
@@ -134,7 +150,7 @@ try:
             date_list = [base + datetime.timedelta(days=x) for x in range(int((datetime.datetime.now().date() - base).days+1))]
 
     # Initialize type of data to extract from NEA data API
-    datatype_entry = input('Choose type of data to extract from API - 1. air temperature 2. rainfall : ')
+    datatype_entry = input('Choose type of data to extract from API - 1. air temperature 2. rainfall 3. relative humidity: ')
     datatype_choice = int(datatype_entry)
     while (datatype_choice):
         if datatype_choice == 1:
@@ -142,6 +158,9 @@ try:
             break
         elif datatype_choice == 2:
             data_type = 'rainfall'
+            break
+        elif datatype_choice == 3:
+            data_type = 'relative-humidity'
             break
         else:
             datatype_entry = input('Invalid input. Please choose type of data to extract from API - 1. air temperature 2. rainfall: ')
